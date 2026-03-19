@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Makeba's Parenting App 👑</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#FFF8F0;--card:#fff;--text:#2D2D2D;--muted:#9A9A9A;--border:#F0EDEA;--shadow:0 4px 24px rgba(0,0,0,.07);--radius:22px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:var(--bg);font-family:'Quicksand',sans-serif;padding-bottom:80px;color:var(--text)}
+
+/* ── HEADER ── */
+.header{background:linear-gradient(110deg,#FF6B6B 0%,#FF9F43 55%,#FFD93D 100%);padding:20px 16px 56px;border-radius:0 0 48px 48px;box-shadow:0 8px 32px rgba(255,107,107,.3);text-align:center;position:relative}
+.header h1{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.15)}
+.header-who{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.header-avatar{font-size:24px;background:rgba(255,255,255,.25);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center}
+.header-name{font-size:13px;font-weight:800;color:#fff}
+.header-logout{font-size:11px;font-weight:700;color:rgba(255,255,255,.75);background:rgba(0,0,0,.15);border:none;border-radius:999px;padding:3px 10px;cursor:pointer;font-family:'Quicksand',sans-serif}
+.header-sub{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;margin-top:3px}
+.notif-bell{position:absolute;top:18px;right:16px;background:rgba(255,255,255,.2);border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.notif-bell:hover{transform:scale(1.1)}
+.notif-badge{position:absolute;top:-3px;right:-3px;background:#FF3B3B;color:#fff;font-size:9px;font-weight:900;border-radius:999px;padding:1px 5px;font-family:'Quicksand',sans-serif;min-width:16px;text-align:center}
+
+/* ── NOTIF PANEL ── */
+.notif-panel{position:fixed;top:0;right:0;bottom:0;width:min(320px,100vw);background:#fff;z-index:800;box-shadow:-8px 0 40px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+.notif-panel.open{transform:translateX(0)}
+.notif-panel-head{background:linear-gradient(110deg,#FF6B6B,#FF9F43);padding:18px 16px;display:flex;align-items:center;gap:10px}
+.notif-panel-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:#fff;flex:1}
+.notif-close{background:rgba(255,255,255,.2);border:none;border-radius:50%;width:32px;height:32px;font-size:16px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.notif-list{flex:1;overflow-y:auto;padding:12px}
+.notif-item{display:flex;gap:10px;background:#fafafa;border:1.5px solid #f0f0f0;border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.notif-item.unread{border-left:3px solid #FF9F43;background:#FFFDF0}
+.ni-icon{font-size:24px;flex-shrink:0}.ni-body{flex:1}.ni-title{font-size:13px;font-weight:800;color:#333;line-height:1.3}.ni-time{font-size:11px;color:#aaa;font-weight:600;margin-top:2px}.ni-dot{width:8px;height:8px;border-radius:50%;background:#FF9F43;flex-shrink:0;margin-top:4px}
+.notif-empty{text-align:center;padding:40px 20px;color:#ccc;font-weight:700;font-size:14px}
+.notif-footer{padding:12px 16px;border-top:1.5px solid #f0f0f0;display:flex;gap:8px}
+.notif-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:790;display:none}
+.notif-overlay.open{display:block}
+
+/* ── NAV ── */
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--border);display:flex;z-index:100;padding:6px 0 10px;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-family:'Quicksand',sans-serif;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0;transition:color .15s}
+.nav-btn .nav-icon{font-size:22px;transition:transform .15s}
+.nav-btn.active{color:#FF6B6B}
+.nav-btn.active .nav-icon{transform:scale(1.15)}
+.nav-btn.parent-btn{color:#7C3AED}
+.nav-btn.parent-btn.active{color:#7C3AED}
+.container{max-width:500px;margin:-36px auto 0;padding:0 14px;position:relative;z-index:1}
+
+/* ── KID TABS ── */
+.kid-tabs{display:flex;gap:8px;margin-bottom:12px}
+.kid-tab{flex:1;background:#fff;border-radius:18px;padding:10px 6px 8px;text-align:center;box-shadow:var(--shadow);border:2.5px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;position:relative}
+.kid-tab:hover{transform:translateY(-2px)}
+.kid-tab.active{border-color:var(--kc,#ccc)}
+.kid-tab.locked-tab{opacity:.6}
+.kid-tab.locked-tab::after{content:'🔒';position:absolute;top:4px;right:6px;font-size:10px}
+.kid-tab .av{font-size:26px;display:block}
+.kid-tab .kn{font-size:12px;font-weight:800;color:#333;margin-top:2px}
+.kid-tab.active .kn{color:var(--kc)}
+.kid-tab .kp{font-size:11px;font-weight:700;color:var(--muted);margin-top:1px}
+.kid-tab.active .kp{color:var(--kc)}
+
+/* ── CALENDAR STRIP ── */
+.cal-strip-wrap{background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:12px 10px 10px;margin-bottom:12px}
+.cal-month-row{display:flex;align-items:center;justify-content:space-between;padding:0 4px;margin-bottom:10px}
+.cal-month{font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;color:#333}
+.cal-week-nav{display:flex;gap:6px}
+.cal-nav-btn{background:#f5f5f5;border:none;border-radius:8px;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Quicksand',sans-serif;transition:background .15s}
+.cal-nav-btn:hover{background:#ede8ff}
+.cal-days{display:flex;gap:5px}
+.cal-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px;border-radius:12px;cursor:pointer;transition:all .15s;border:2px solid transparent;min-width:0}
+.cal-day:hover{background:#FFF8F0}
+.cal-day.today{background:linear-gradient(135deg,#FF6B6B,#FF9F43);border-color:transparent}
+.cal-day.selected:not(.today){background:#FFF3E0;border-color:#FFD93D}
+.cal-day.has-tasks::after{content:'';display:block;width:5px;height:5px;border-radius:50%;background:#FF9F43;margin-top:1px}
+.cal-day.today.has-tasks::after{background:#fff}
+.cal-day-name{font-size:10px;font-weight:800;color:#aaa}
+.cal-day.today .cal-day-name,.cal-day.today .cal-day-num{color:#fff}
+.cal-day.selected:not(.today) .cal-day-name{color:#FF9F43}
+.cal-day.selected:not(.today) .cal-day-num{color:#FF6B6B;font-weight:900}
+.cal-day-num{font-size:15px;font-weight:800;color:#333}
+.cal-day.other-week{opacity:.4}
+.cal-progress-row{display:flex;gap:4px;margin-top:8px;padding:0 2px}
+.cal-prog-item{flex:1;display:flex;flex-direction:column;gap:2px}
+.cal-prog-label{display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#aaa}
+.cal-prog-track{height:5px;background:#f0f0f0;border-radius:999px;overflow:hidden}
+.cal-prog-fill{height:100%;border-radius:999px;transition:width .4s}
+
+/* ── CHORE DAY BADGE ── */
+.task-day-badge{font-size:9px;font-weight:800;border-radius:999px;padding:1px 6px;flex-shrink:0}
+.task-day-badge.today-badge{background:#FF6B6B;color:#fff}
+.task-day-badge.everyday-badge{background:#22c55e20;color:#22c55e;border:1px solid #22c55e40}
+.task-day-badge.wrong-day{background:#f0f0f0;color:#bbb}
+.task-row.wrong-day-task{opacity:.45;cursor:default}
+.task-row.wrong-day-task:hover{transform:none;box-shadow:none}
+.task-row.today-task{border-color:var(--tc,#FF6B6B)!important}
+
+/* ── CARD / TASK ── */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px}
+.card-head{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1.5px solid var(--border)}
+.card-avatar{font-size:46px;line-height:1}
+.card-info{flex:1}
+.card-name{font-family:'Baloo 2',cursive;font-size:21px;font-weight:800;color:#222}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.tag{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px;background:#FFFDF0;border-bottom:1px solid #f5f5f5}
+.badge{font-size:11px;font-weight:800;background:#FFD93D20;color:#9a6f00;border:1.5px solid #FFD93D;border-radius:999px;padding:2px 8px;animation:popIn .4s ease}
+.prog-row{display:flex;gap:12px;padding:12px 16px 4px}
+.prog-col{flex:1}
+.prog-label{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#777;margin-bottom:4px}
+.prog-track{height:9px;background:#f0f0f0;border-radius:999px;overflow:hidden}
+.prog-fill{height:100%;border-radius:999px;transition:width .5s cubic-bezier(.34,1.56,.64,1)}
+.sub-tabs{display:flex;gap:6px;margin:10px 14px 0}
+.sub-tab{flex:1;padding:8px;border-radius:12px;font-weight:800;font-size:13px;background:#f5f5f5;color:#777;border:none;cursor:pointer;font-family:'Quicksand',sans-serif;transition:all .15s}
+.sub-tab.active{color:#fff}
+.task-list{padding:10px 12px 4px}
+.empty-msg{text-align:center;padding:16px;color:#ccc;font-weight:700;font-size:13px}
+.task-row{display:flex;align-items:center;gap:8px;background:#fafafa;border:2px solid #f0f0f0;border-radius:14px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.task-row:hover{transform:translateX(4px);box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.task-row.locked-task{cursor:default;opacity:.65}
+.task-row.locked-task:hover{transform:none;box-shadow:none}
+.task-icon{font-size:20px;flex-shrink:0}
+.task-label{flex:1;font-weight:700;font-size:13px;color:#333;line-height:1.3}
+.task-label.done{color:#bbb;text-decoration:line-through}
+.task-check{width:24px;height:24px;border-radius:50%;flex-shrink:0;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:900;transition:background .2s}
+.task-pending{font-size:10px;font-weight:800;color:#FF9F43;background:#FFF3E0;border:1.5px solid #FFD93D;border-radius:999px;padding:2px 7px;flex-shrink:0}
+
+/* ── REWARDS ── */
+.rewards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 2px}
+.reward-card{border-radius:16px;padding:14px 10px;text-align:center;border:2px solid #eee;background:#f9f9f9;opacity:.5;transition:transform .12s,box-shadow .12s}
+.reward-card.unlocked{background:linear-gradient(135deg,#FFF9F0,#FFF3E0);border-color:#FFD93D;opacity:1}
+.reward-card.can-redeem:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(255,159,67,.25)}
+.reward-card.pending-redeem{border-color:#A78BFA!important;background:linear-gradient(135deg,#F5F0FF,#EDE8FF)!important;opacity:1!important}
+.reward-icon{font-size:28px;margin-bottom:3px}
+.reward-label{font-size:12px;font-weight:800;color:#333;margin-bottom:3px;line-height:1.3}
+.reward-pts{font-size:11px;font-weight:900;color:#bbb;background:#f0f0f0;border-radius:999px;padding:2px 8px;display:inline-block}
+.reward-card.unlocked .reward-pts{color:#FF9F43;background:#FFD93D30}
+.reward-card.pending-redeem .reward-pts{color:#7C3AED;background:#EDE8FF}
+.reward-redeem-btn{margin-top:7px;background:linear-gradient(90deg,#FF9F43,#FFD93D);color:#fff;border:none;border-radius:999px;padding:5px 14px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Quicksand',sans-serif;display:block;width:100%}
+.reward-redeem-pending{font-size:10px;color:#7C3AED;font-weight:800;margin-top:5px;animation:pulse 2s infinite}
+.reward-unlocked-txt{font-size:10px;color:#22c55e;font-weight:800;margin-top:4px}
+.reward-nudge{font-size:10px;color:#FF9F43;font-weight:700;margin-top:5px}
+.reward-nudge-bar{height:4px;background:#f0f0f0;border-radius:999px;overflow:hidden;margin-top:4px}
+.reward-nudge-fill{height:100%;background:linear-gradient(90deg,#FF9F43,#FFD93D);border-radius:999px}
+
+/* ── APPROVAL BANNER ── */
+.approval-banner{background:linear-gradient(90deg,#FF9F43,#FFD93D);border-radius:16px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;cursor:pointer;box-shadow:0 4px 14px rgba(255,159,67,.3);animation:pulse-glow 2s infinite}
+@keyframes pulse-glow{0%,100%{box-shadow:0 4px 14px rgba(255,159,67,.3)}50%{box-shadow:0 4px 22px rgba(255,159,67,.55)}}
+.ab-icon{font-size:28px}.ab-text{flex:1}.ab-title{font-weight:800;font-size:13px;color:#fff}.ab-sub{font-size:11px;color:rgba(255,255,255,.85);font-weight:600}.ab-arrow{font-size:18px;color:#fff}
+.section-title{font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;color:#555;margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+
+/* ── LEADERBOARD ── */
+.lb-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
+.lb-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;margin-bottom:6px;cursor:pointer;transition:transform .12s}
+.lb-row:hover{transform:translateX(3px)}
+.lb-row.lb-1{background:linear-gradient(90deg,#FFF9E0,#FFF3C0);border:1.5px solid #FFD93D}
+.lb-row.lb-2{background:#f8f8f8;border:1.5px solid #ddd}
+.lb-row.lb-3{background:linear-gradient(90deg,#FFF3EE,#FFE8DC);border:1.5px solid #FFB899}
+.lb-rank{font-size:20px;font-weight:900;min-width:28px;text-align:center}
+.lb-avatar{font-size:28px}.lb-info{flex:1}.lb-name{font-size:14px;font-weight:800;color:#333}.lb-detail{font-size:11px;color:#aaa;font-weight:600}.lb-pts{font-size:18px;font-weight:900}
+
+/* ── WEEK SUMMARY ── */
+.week-summary-card{background:linear-gradient(135deg,#FFF9F0,#FFF0E0);border:2px solid #FFD93D;border-radius:20px;padding:16px;margin-bottom:12px}
+.ws-title{font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;color:#AA6600;margin-bottom:12px}
+.ws-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ws-stat{background:rgba(255,255,255,.7);border-radius:12px;padding:10px 6px;text-align:center}
+.ws-val{font-size:20px;font-weight:900;color:#333}.ws-lbl{font-size:10px;font-weight:700;color:#aaa;margin-top:2px}
+
+/* ── REWARD HISTORY ── */
+.week-section{margin-bottom:14px}
+.week-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.week-label{font-family:'Baloo 2',cursive;font-size:13px;font-weight:800;color:#555}
+.week-badge{font-size:11px;font-weight:700;background:#FFF3E0;color:#FF9F43;border-radius:999px;padding:2px 8px}
+.redeem-history-item{display:flex;align-items:center;gap:10px;background:#fafafa;border:1.5px solid #f0f0f0;border-radius:13px;padding:10px 12px;margin-bottom:6px}
+.rhi-icon{font-size:20px}.rhi-info{flex:1}.rhi-name{font-size:13px;font-weight:800;color:#333}.rhi-meta{font-size:11px;color:#aaa;font-weight:600}
+.rhi-pts{font-size:12px;font-weight:900;color:#FF6B6B}
+.rhi-status{font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px}
+.rhi-status.approved{background:#F0FFF4;color:#22c55e}.rhi-status.pending{background:#F5F0FF;color:#7C3AED}.rhi-status.rejected{background:#FFF0F0;color:#FF6B6B}
+
+/* ── CHART ── */
+.chart-container{background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
+.chart-title{font-family:'Baloo 2',cursive;font-size:14px;font-weight:800;color:#555;margin-bottom:10px}
+.chart-tabs{display:flex;gap:6px;margin-bottom:10px}
+.chart-tab{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:2px solid #eee;background:#fafafa;color:#999;cursor:pointer;font-family:'Quicksand',sans-serif;transition:all .15s}
+.chart-tab.active{background:#FF6B6B;border-color:#FF6B6B;color:#fff}
+
+/* ── SUMMARY ── */
+.summary-row{display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 0;border-bottom:1px solid var(--border)}
+.summary-row:last-child{border-bottom:none}
+.sum-av{font-size:22px}.sum-info{flex:1}.sum-name{font-size:13px;font-weight:800;color:#333}.sum-age{color:#bbb;font-weight:600;font-size:11px}.sum-stats{font-size:12px;font-weight:700;color:#aaa}
+.sum-bars{display:flex;gap:4px;margin-top:3px}
+.sum-track{flex:1;height:6px;background:#f0f0f0;border-radius:999px;overflow:hidden}
+.sum-fill{height:100%;border-radius:999px;transition:width .4s}
+.sum-pcts{display:flex;gap:4px;margin-top:2px}
+.sum-pct{flex:1;font-size:10px;color:#ccc;font-weight:600}
+
+/* ── DRAG SCHEDULER ── */
+.sched-wrap{margin-top:8px}
+.sched-day-col{margin-bottom:10px;border:2px solid #f0f0f0;border-radius:14px;overflow:hidden}
+.sched-day-head{display:flex;align-items:center;gap:8px;padding:8px 12px;font-weight:800;font-size:13px}
+.sched-day-head.today-head{background:linear-gradient(90deg,#FF6B6B22,#FF9F4322)}
+.sched-day-name{flex:1;color:#555}
+.sched-day-date{font-size:11px;color:#aaa;font-weight:600}
+.sched-drop-zone{min-height:44px;padding:6px 8px;background:#fafafa;transition:background .2s}
+.sched-drop-zone.drag-over{background:#FFF3E0;border:2px dashed #FF9F43}
+.sched-chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1.5px solid #e0e0e0;border-radius:999px;padding:4px 10px;margin:3px;font-size:12px;font-weight:700;cursor:grab;user-select:none;transition:box-shadow .15s}
+.sched-chip:hover{box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.sched-chip.dragging{opacity:.45;cursor:grabbing}
+.sched-chip .chip-remove{font-size:10px;color:#bbb;cursor:pointer;margin-left:2px}
+.sched-chip .chip-remove:hover{color:#FF6B6B}
+.sched-unassigned{border:2px dashed #e0e0e0;border-radius:14px;padding:8px;margin-bottom:10px;background:#f9f9f9}
+.sched-unassigned-title{font-size:12px;font-weight:800;color:#aaa;margin-bottom:6px;padding:0 4px}
+.everyday-toggle{display:flex;align-items:center;gap:8px;background:#F0FFF4;border:1.5px solid #22c55e40;border-radius:12px;padding:6px 10px;margin:3px;cursor:pointer}
+.everyday-toggle input{width:16px;height:16px;cursor:pointer;accent-color:#22c55e}
+.everyday-toggle span{font-size:12px;font-weight:700;color:#22c55e}
+
+/* ── PARENT FORMS ── */
+.form-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.form-input{flex:1;border:2px solid #e8e8e8;border-radius:11px;padding:9px 12px;font-size:13px;font-weight:600;outline:none;font-family:'Quicksand',sans-serif;background:#fafafa;color:#333;transition:border-color .2s}
+.form-input:focus{border-color:#7C3AED}
+.form-select{border:2px solid #e8e8e8;border-radius:11px;padding:9px 8px;font-size:13px;font-weight:600;outline:none;font-family:'Quicksand',sans-serif;background:#fafafa;color:#333}
+.btn{border-radius:11px;padding:9px 16px;font-weight:800;font-size:13px;border:none;cursor:pointer;font-family:'Quicksand',sans-serif;transition:transform .12s}
+.btn:hover{transform:scale(1.05)}
+.btn-purple{background:#7C3AED;color:#fff;box-shadow:0 4px 12px rgba(124,58,237,.25)}
+.btn-red{background:#FF6B6B;color:#fff}
+.btn-green{background:#22c55e;color:#fff}
+.btn-gray{background:#f0f0f0;color:#666}
+.btn-orange{background:linear-gradient(90deg,#FF9F43,#FFD93D);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.kid-edit-card{background:#fafafa;border:2px solid var(--border);border-radius:16px;padding:14px;margin-bottom:10px}
+.kid-edit-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kid-edit-avatar{font-size:32px}.kid-edit-name{font-weight:800;font-size:15px;color:#333;flex:1}
+.avatar-picker{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.avatar-opt{font-size:22px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:10px;border:2px solid transparent;cursor:pointer;transition:all .15s;background:#f0f0f0}
+.avatar-opt.selected{border-color:#7C3AED;background:#ede8ff}
+.task-edit-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.task-edit-icon{font-size:16px;width:24px;text-align:center}
+.task-edit-label{flex:1;font-size:13px;font-weight:600;color:#444}
+.task-edit-remove{color:#FF6B6B;background:none;border:none;cursor:pointer;font-size:16px}
+.approval-item{background:#FFFDF0;border:2px solid #FFD93D;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.ai-avatar{font-size:22px}.ai-info{flex:1}.ai-name{font-size:13px;font-weight:800;color:#333}.ai-task{font-size:11px;color:#888;font-weight:600}
+.approval-actions{display:flex;gap:6px}
+.reward-approval-item{background:#F5F0FF;border:2px solid #A78BFA;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rai-icon{font-size:26px}.rai-info{flex:1}.rai-name{font-size:13px;font-weight:800;color:#333}.rai-sub{font-size:11px;color:#888;font-weight:600}.rai-cost{font-size:13px;font-weight:900;color:#7C3AED}
+.points-row{display:flex;align-items:center;gap:8px;background:#fafafa;border-radius:12px;padding:10px 12px;margin-bottom:8px;flex-wrap:wrap}
+.points-kid{display:flex;align-items:center;gap:8px;flex:1}.points-av{font-size:20px}.points-name{font-weight:800;font-size:13px;color:#333}.points-val{font-size:15px;font-weight:900;color:#FF6B6B}
+.points-btns{display:flex;gap:6px}
+.pts-btn{width:30px;height:30px;border-radius:9px;border:none;cursor:pointer;font-size:16px;font-weight:900;font-family:'Quicksand',sans-serif;display:flex;align-items:center;justify-content:center;transition:transform .1s}
+.pts-btn:hover{transform:scale(1.1)}
+.pts-btn.plus{background:#22c55e20;color:#22c55e}.pts-btn.minus{background:#FF6B6B20;color:#FF6B6B}
+.pts-adj-input{width:44px;border:2px solid #e0e0e0;border-radius:8px;padding:4px 6px;font-size:12px;font-weight:700;text-align:center;outline:none;font-family:'Quicksand',sans-serif}
+.reward-edit-card{display:flex;align-items:center;gap:10px;background:#fafafa;border:2px solid var(--border);border-radius:13px;padding:10px 12px;margin-bottom:7px}
+.reward-edit-icon{font-size:24px}.reward-edit-info{flex:1}.reward-edit-name{font-size:13px;font-weight:800;color:#333}.reward-edit-pts{font-size:11px;color:#aaa;font-weight:700}
+.kid-pin-row{display:flex;align-items:center;gap:8px;background:#fafafa;border-radius:12px;padding:10px 12px;margin-bottom:8px;flex-wrap:wrap}
+.kid-pin-av{font-size:20px}.kid-pin-name{font-weight:800;font-size:13px;color:#333;flex:1}
+.kid-pin-input{width:80px;border:2px solid #e0e0e0;border-radius:8px;padding:6px 8px;font-size:14px;font-weight:700;text-align:center;outline:none;letter-spacing:4px;font-family:'Quicksand',sans-serif}
+.kid-pin-input:focus{border-color:#FF6B6B}
+.kid-pin-save{background:#FF6B6B;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Quicksand',sans-serif}
+.setting-row{display:flex;align-items:center;gap:10px;background:#fafafa;border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.setting-label{flex:1}.setting-title{font-size:13px;font-weight:800;color:#333}.setting-sub{font-size:11px;color:#aaa;font-weight:600;margin-top:2px}
+.collapsible-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:#f8f5ff;border-radius:12px;padding:10px 14px;margin-bottom:6px}
+.collapsible-head span{font-weight:800;font-size:13px;color:#7C3AED}
+.collapsible-body{display:none;padding:0 2px}.collapsible-body.open{display:block}
+.icon-picker{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.icon-opt{font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:2px solid transparent;cursor:pointer;background:#f5f5f5;transition:all .15s}
+.icon-opt.selected{border-color:#FF9F43;background:#FFF3E0}
+.pin-change-row{display:flex;gap:6px;align-items:center;margin-top:8px}
+.pin-change-input{flex:1;border:2px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:700;text-align:center;outline:none;letter-spacing:6px;font-family:'Quicksand',sans-serif}
+.pin-change-input:focus{border-color:#7C3AED}
+.divider{height:1px;background:var(--border);margin:10px 0}
+.add-row{padding:4px 12px 14px;display:flex;gap:8px}
+.add-input{flex:1;border:2px solid #ddd;border-radius:11px;padding:8px 12px;font-size:13px;font-weight:600;outline:none;font-family:'Quicksand',sans-serif;background:#fafafa;color:#333}
+.add-btn{border-radius:11px;padding:8px 16px;font-weight:900;font-size:17px;color:#fff;border:none;cursor:pointer;font-family:'Quicksand',sans-serif}
+
+/* ── LOGIN ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.pin-box{background:#fff;border-radius:28px;padding:28px 24px;width:300px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:popIn .3s ease}
+.pin-box h2{font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:#333;margin-bottom:4px}
+.pin-box p{font-size:12px;color:#aaa;font-weight:600;margin-bottom:18px}
+.pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:20px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#f0f0f0;border:2px solid #e0e0e0;transition:all .2s}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-key{background:#f5f5f5;border:none;border-radius:14px;padding:14px;font-size:18px;font-weight:800;color:#333;cursor:pointer;font-family:'Quicksand',sans-serif;transition:transform .1s,background .15s}
+.pin-key:hover{background:#ede8ff;transform:scale(1.05)}
+.pin-key.del{color:#FF6B6B}
+.pin-shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.login-screen{position:fixed;inset:0;background:linear-gradient(160deg,#FFF9F0 0%,#F0F7FF 55%,#FDF0FF 100%);z-index:600;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.login-title{font-family:'Baloo 2',cursive;font-size:26px;font-weight:800;color:#333;margin-bottom:4px;text-align:center}
+.login-sub{font-size:13px;font-weight:600;color:#aaa;margin-bottom:28px;text-align:center}
+.login-avatars{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:360px}
+.login-avatar-btn{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:#fff;border:3px solid transparent;border-radius:24px;padding:16px 14px;box-shadow:0 4px 20px rgba(0,0,0,.08);transition:transform .15s,border-color .15s;min-width:88px}
+.login-avatar-btn:hover{transform:translateY(-4px)}
+.lav{font-size:42px;display:block}.lname{font-size:13px;font-weight:800}.lpts{font-size:11px;font-weight:700;color:#aaa}
+.login-parent-btn{margin-top:20px;background:none;border:2px solid #E8DEFF;border-radius:999px;padding:10px 24px;font-size:13px;font-weight:800;color:#7C3AED;cursor:pointer;font-family:'Quicksand',sans-serif}
+
+#toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e1e2e;color:#fff;border-radius:999px;padding:11px 20px;font-weight:800;font-size:14px;z-index:9998;display:flex;align-items:center;gap:7px;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.confetti-piece{position:fixed;top:0;border-radius:3px;z-index:9999;pointer-events:none;animation:fall 1.8s ease-in forwards}
+@keyframes fall{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(540deg);opacity:0}}
+@keyframes popIn{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes slide-down{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.slide-in{animation:slide-down .22s ease}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="font-size:32px;margin-bottom:2px">👑</div>
+  <h1>Makeba's Parenting App</h1>
+  <div class="header-who" id="headerWho" style="display:none"></div>
+  <p class="header-sub" id="headerSub">Family Star Chart 🌟</p>
+  <button class="notif-bell" id="notifBell" onclick="toggleNotifPanel()" style="display:none">
+    🔔<span class="notif-badge" id="notifBadge" style="display:none">0</span>
+  </button>
+</div>
+
+<div class="container" id="appContainer"></div>
+
+<nav class="nav">
+  <button class="nav-btn active" id="navKids" onclick="setPage('kids')"><span class="nav-icon">🏠</span>Kids</button>
+  <button class="nav-btn" id="navRewards" onclick="setPage('rewards')"><span class="nav-icon">🎁</span>Rewards</button>
+  <button class="nav-btn" id="navChart" onclick="setPage('chart')"><span class="nav-icon">📊</span>Progress</button>
+  <button class="nav-btn parent-btn" id="navParent" onclick="requestParent()"><span class="nav-icon">🔐</span>Parent</button>
+</nav>
+
+<div id="toast"><span id="toastIcon"></span><span id="toastMsg"></span></div>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-title">Who's here? 👋</div>
+  <div class="login-sub">Tap your picture to sign in</div>
+  <div class="login-avatars" id="loginAvatars"></div>
+  <button class="login-parent-btn" onclick="requestParent()">🔐 Parent Login</button>
+</div>
+
+<div class="overlay" id="pinOverlay" style="display:none">
+  <div class="pin-box">
+    <div id="pinAvatar" style="font-size:44px;margin-bottom:6px"></div>
+    <h2 id="pinTitle">Enter PIN</h2>
+    <p id="pinHint">Your 4-digit PIN</p>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key btn-gray" onclick="pinCancel()">✕</button><button class="pin-key" onclick="pinKey('0')">0</button><button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<div class="notif-overlay" id="notifOverlay" onclick="closeNotifPanel()"></div>
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-panel-head">
+    <span style="font-size:22px">🔔</span>
+    <span class="notif-panel-title">Notifications</span>
+    <button class="notif-close" onclick="closeNotifPanel()">✕</button>
+  </div>
+  <div class="notif-list" id="notifList"></div>
+  <div class="notif-footer">
+    <button class="btn btn-gray btn-sm" onclick="markAllRead()" style="flex:1">Mark all read</button>
+    <button class="btn btn-red btn-sm" onclick="clearNotifs()" style="flex:1">Clear all</button>
+  </div>
+</div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────────
+const DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_SHORT=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DEFAULT_KIDS=[
+  {id:1,name:"Malachi",age:4,avatar:"🐣",color:"#FF6B6B",pin:"",
+   chores:[{id:101,label:"Put toys away",icon:"🧸",days:[],everyday:true},{id:102,label:"Make my bed",icon:"🛏️",days:[],everyday:true},{id:103,label:"Wash hands",icon:"🧼",days:[],everyday:true},{id:104,label:"Help set table",icon:"🍽️",days:[1,3,5],everyday:false}],
+   homework:[{id:111,label:"ABC practice",icon:"🔤",days:[],everyday:true},{id:112,label:"Draw a picture",icon:"🖍️",days:[1,3],everyday:false},{id:113,label:"Read with grown-up",icon:"📖",days:[],everyday:true}]},
+  {id:2,name:"Malia",age:9,avatar:"🦊",color:"#FF9F43",pin:"",
+   chores:[{id:201,label:"Clean room",icon:"🧹",days:[6],everyday:false},{id:202,label:"Feed the pet",icon:"🐾",days:[],everyday:true},{id:203,label:"Take out trash",icon:"🗑️",days:[1,4],everyday:false},{id:204,label:"Wipe counters",icon:"🧽",days:[],everyday:true},{id:205,label:"Put laundry away",icon:"👕",days:[6],everyday:false}],
+   homework:[{id:211,label:"Math worksheet",icon:"➗",days:[],everyday:true},{id:212,label:"Reading (20 min)",icon:"📚",days:[],everyday:true},{id:213,label:"Spelling words",icon:"✏️",days:[1,2,3],everyday:false},{id:214,label:"Science notes",icon:"🔬",days:[2,4],everyday:false}]},
+  {id:3,name:"Maya",age:12,avatar:"🐉",color:"#A78BFA",pin:"",
+   chores:[{id:301,label:"Vacuum living room",icon:"🌀",days:[6],everyday:false},{id:302,label:"Wash dishes",icon:"🍳",days:[],everyday:true},{id:303,label:"Take out trash",icon:"🗑️",days:[1,4],everyday:false},{id:304,label:"Mow lawn",icon:"🌿",days:[6],everyday:false},{id:305,label:"Organize backpack",icon:"🎒",days:[0],everyday:false}],
+   homework:[{id:311,label:"Math homework",icon:"📐",days:[],everyday:true},{id:312,label:"English / essay",icon:"📝",days:[2,4],everyday:false},{id:313,label:"History reading",icon:"📜",days:[1,3],everyday:false},{id:314,label:"Study for test",icon:"🧠",days:[3,4],everyday:false},{id:315,label:"Science project",icon:"⚗️",days:[2,4],everyday:false}]}
+];
+const DEFAULT_REWARDS=[
+  {id:1,pts:20,label:"Extra screen time",icon:"📱"},
+  {id:2,pts:40,label:"Pick tonight's dinner",icon:"🍕"},
+  {id:3,pts:75,label:"Friend sleepover",icon:"🏕️"},
+  {id:4,pts:100,label:"Special outing",icon:"🎡"}
+];
+const BADGE_DEFS=[
+  {id:"streak3",icon:"🔥",label:"3-Day Streak!",check:d=>d.streak>=3},
+  {id:"streak7",icon:"⚡",label:"Week Warrior!",check:d=>d.streak>=7},
+  {id:"pts50",icon:"⭐",label:"50 Star Club!",check:d=>d.points>=50},
+  {id:"pts100",icon:"🏆",label:"Superstar!",check:d=>d.points>=100},
+  {id:"allday",icon:"💎",label:"Perfect Day!",check:d=>isAllDayDone(d)}
+];
+const AVATARS=["🐣","🦊","🐉","🦁","🐼","🐸","🦄","🐯","🦋","🐧","🦅","🐬","🐺","🐻","🐨","🦒"];
+const TASK_ICONS_CHORE=["🧹","🛏️","🧸","🍽️","🧼","🗑️","🧽","👕","🌀","🍳","🌿","🎒","💧","🪣","🐾","🔧"];
+const TASK_ICONS_HW=["📚","✏️","📐","📝","📜","🧠","⚗️","🔬","➗","🔤","🖍️","📖","📌","🗺️","🎨","💻"];
+
+// ─── STATE ───────────────────────────────────────────────────────
+let S=loadState();
+function defaultState(){
+  const kids={};
+  DEFAULT_KIDS.forEach(k=>{
+    kids[k.id]={points:0,streak:0,lastDate:null,badges:[],
+      chores:k.chores.map(c=>({...c,done:false,pending:false})),
+      homework:k.homework.map(h=>({...h,done:false,pending:false}))};
+  });
+  return {kids,kidDefs:JSON.parse(JSON.stringify(DEFAULT_KIDS)),
+    rewards:JSON.parse(JSON.stringify(DEFAULT_REWARDS)),
+    pin:"1234",nextKidId:4,nextRewardId:5,nextTaskId:400,
+    pendingApprovals:[],pendingRewardApprovals:[],rewardHistory:[],
+    notifications:[],weeklyHistory:{},
+    settings:{autoResetEnabled:true,autoResetDay:0,lastResetWeek:''}};
+}
+function loadState(){
+  try{
+    const r=localStorage.getItem('fsc_v6');
+    if(r){
+      const s=JSON.parse(r);
+      if(!s.pendingRewardApprovals)s.pendingRewardApprovals=[];
+      if(!s.rewardHistory)s.rewardHistory=[];
+      if(!s.notifications)s.notifications=[];
+      if(!s.settings)s.settings={autoResetEnabled:true,autoResetDay:0,lastResetWeek:''};
+      if(!s.nextTaskId)s.nextTaskId=400;
+      // Ensure days/everyday on all tasks
+      s.kidDefs.forEach(k=>{
+        ['chores','homework'].forEach(type=>{
+          k[type].forEach(t=>{if(!t.days)t.days=[];if(t.everyday===undefined)t.everyday=true;});
+          if(s.kids[k.id]){
+            s.kids[k.id][type].forEach(t=>{if(!t.days)t.days=[];if(t.everyday===undefined)t.everyday=true;});
+          }
+        });
+      });
+      return s;
+    }
+  }catch(e){}
+  return defaultState();
+}
+function save(){localStorage.setItem('fsc_v6',JSON.stringify(S))}
+
+// ─── SESSION ─────────────────────────────────────────────────────
+let page='kids',activeKidId=S.kidDefs[0]?.id||1,activeTab='chores';
+let parentUnlocked=false,loggedInKidId=null;
+let pinBuffer='',pinMode='parent';
+let chartKid=activeKidId,chartType='points';
+let selectedViewDate=new Date(); // the day currently selected in calendar strip
+let calWeekOffset=0; // 0=current week, -1=last week etc
+let collapsibleOpen={};
+let chartInstance=null,toastTimer=null;
+let dragTaskId=null,dragKidId=null,dragType=null; // for drag scheduler
+
+// ─── HELPERS ─────────────────────────────────────────────────────
+function pts(kidId){const k=S.kidDefs.find(x=>x.id===kidId);if(!k)return 5;return k.age<=5?10:k.age<=10?7:5}
+function isoWeek(d){const dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()+4-(dt.getDay()||7));const y=dt.getFullYear();const w=Math.ceil(((dt-new Date(y,0,1))/86400000+1)/7);return `${y}-W${String(w).padStart(2,'0')}`}
+function pendingCount(){return S.pendingApprovals.length+S.pendingRewardApprovals.length}
+function unreadNotifCount(){return S.notifications.filter(n=>!n.read).length}
+function canEdit(kidId){return loggedInKidId===kidId}
+function fmtTime(ts){return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' '+new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'})}
+function isAllDayDone(d){
+  const today=new Date().getDay();
+  const todayTasks=[...d.chores,...d.homework].filter(t=>t.everyday||t.days?.includes(today));
+  return todayTasks.length>0&&todayTasks.every(t=>t.done&&!t.pending);
+}
+// Is a task active on a given day-of-week?
+function taskActiveOnDay(task,dayOfWeek){return task.everyday||task.days?.includes(dayOfWeek)}
+// Get tasks for selected view date
+function getTasksForDay(kidId,type,date){
+  const dow=date.getDay();
+  return (S.kids[kidId]?.[type]||[]).filter(t=>taskActiveOnDay(t,dow));
+}
+function pctForDay(kidId,type,date){
+  const tasks=getTasksForDay(kidId,type,date);
+  if(!tasks.length)return 0;
+  return Math.round(tasks.filter(t=>t.done&&!t.pending).length/tasks.length*100);
+}
+// Get start-of-week (Sunday) for a given offset
+function getWeekStart(offsetWeeks=0){
+  const d=new Date();d.setHours(0,0,0,0);
+  d.setDate(d.getDate()-d.getDay()+(offsetWeeks*7));
+  return d;
+}
+function todayStr(){return new Date().toDateString()}
+
+function showToast(msg,icon="🎉"){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  document.getElementById('toastIcon').textContent=icon;
+  t.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+function confetti(){
+  const colors=["#FF6B6B","#FF9F43","#FFD93D","#4ECDC4","#A78BFA","#74C0FC"];
+  for(let i=0;i<22;i++){
+    const el=document.createElement('div');el.className='confetti-piece';
+    const sz=7+Math.random()*9;
+    el.style.cssText=`left:${10+Math.random()*80}%;width:${sz}px;height:${sz}px;background:${colors[i%6]};animation-delay:${Math.random()*0.5}s;transform:rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),2200);
+  }
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────
+function pushNotif(title,body,icon='🔔'){
+  S.notifications.unshift({id:Date.now(),title,body,icon,time:Date.now(),read:false});
+  if(S.notifications.length>50)S.notifications=S.notifications.slice(0,50);
+  save();updateNotifBell();
+}
+function updateNotifBell(){
+  const cnt=unreadNotifCount();
+  const badge=document.getElementById('notifBadge');
+  if(badge){badge.textContent=cnt>9?'9+':cnt;badge.style.display=cnt>0?'block':'none';}
+}
+function toggleNotifPanel(){
+  const p=document.getElementById('notifPanel'),o=document.getElementById('notifOverlay');
+  if(p.classList.contains('open')){closeNotifPanel();}
+  else{renderNotifList();p.classList.add('open');o.classList.add('open');}
+}
+function closeNotifPanel(){document.getElementById('notifPanel').classList.remove('open');document.getElementById('notifOverlay').classList.remove('open');}
+function renderNotifList(){
+  const el=document.getElementById('notifList');if(!el)return;
+  if(!S.notifications.length){el.innerHTML='<div class="notif-empty">All caught up! 🎉<br/>No new notifications</div>';return;}
+  el.innerHTML=S.notifications.map(n=>`<div class="notif-item${n.read?'':' unread'}" onclick="readNotif(${n.id})">
+    <span class="ni-icon">${n.icon}</span>
+    <div class="ni-body"><div class="ni-title">${n.title} — ${n.body}</div><div class="ni-time">${fmtTime(n.time)}</div></div>
+    ${n.read?'':'<div class="ni-dot"></div>'}
+  </div>`).join('');
+}
+function readNotif(id){S.notifications.forEach(n=>{if(n.id===id)n.read=true;});save();updateNotifBell();renderNotifList();}
+function markAllRead(){S.notifications.forEach(n=>n.read=true);save();updateNotifBell();renderNotifList();}
+function clearNotifs(){S.notifications=[];save();updateNotifBell();renderNotifList();}
+
+// ─── AUTO RESET ──────────────────────────────────────────────────
+function checkAutoReset(){
+  if(!S.settings.autoResetEnabled)return;
+  const now=new Date();const dayOfWeek=now.getDay();
+  const wk=isoWeek(now);const resetKey=`${wk}-day${S.settings.autoResetDay}`;
+  if(dayOfWeek===S.settings.autoResetDay&&S.settings.lastResetWeek!==resetKey){
+    S.kidDefs.forEach(k=>{
+      const d=S.kids[k.id];if(!d)return;
+      d.chores=d.chores.map(c=>({...c,done:false,pending:false}));
+      d.homework=d.homework.map(h=>({...h,done:false,pending:false}));
+    });
+    S.pendingApprovals=[];
+    S.settings.lastResetWeek=resetKey;
+    pushNotif('Weekly Reset 🌅','All tasks cleared for a new week!','🌅');
+    save();showToast('New week — all tasks reset! 🌅','🌅');
+  }
+}
+
+// ─── CSV EXPORT ──────────────────────────────────────────────────
+function exportCSV(){
+  const rows=[['Kid','Week','Chores Done','HW Done','Points Earned','Rewards Redeemed','Points Spent']];
+  S.kidDefs.forEach(k=>{
+    const hist=S.weeklyHistory[k.id]||{};
+    const allWeeks=new Set([...Object.keys(hist)]);
+    S.rewardHistory.filter(r=>r.kidId===k.id&&r.status==='approved').forEach(r=>allWeeks.add(r.week));
+    [...allWeeks].sort().forEach(wk=>{
+      const wh=hist[wk]||{chores:0,homework:0,points:0};
+      const red=S.rewardHistory.filter(r=>r.kidId===k.id&&r.week===wk&&r.status==='approved');
+      rows.push([k.name,wk,wh.chores,wh.homework,wh.points,red.length,red.reduce((s,r)=>s+r.pts,0)]);
+    });
+  });
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='makeba-star-chart.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('CSV exported! 📊','💾');
+}
+
+// ─── LOGIN ───────────────────────────────────────────────────────
+function showLoginScreen(){
+  loggedInKidId=null;parentUnlocked=false;
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('headerWho').style.display='none';
+  document.getElementById('headerSub').style.display='block';
+  document.getElementById('notifBell').style.display='none';
+  document.getElementById('loginAvatars').innerHTML=S.kidDefs.map(k=>{
+    const d=S.kids[k.id]||{points:0};
+    const today=new Date();
+    const todayTasks=getTasksForDay(k.id,'chores',today).length+getTasksForDay(k.id,'homework',today).length;
+    const doneTasks=[...getTasksForDay(k.id,'chores',today),...getTasksForDay(k.id,'homework',today)].filter(t=>t.done&&!t.pending).length;
+    return `<div class="login-avatar-btn" onmouseover="this.style.borderColor='${k.color}'" onmouseout="this.style.borderColor='transparent'" onclick="loginKid(${k.id})">
+      <span class="lav">${k.avatar}</span>
+      <span class="lname" style="color:${k.color}">${k.name}</span>
+      <span class="lpts">⭐ ${d.points} pts</span>
+      ${todayTasks>0?`<span style="font-size:10px;background:${k.color}22;color:${k.color};border-radius:999px;padding:2px 7px;font-weight:800">${doneTasks}/${todayTasks} today</span>`:''}
+    </div>`;
+  }).join('');
+}
+function loginKid(kidId){
+  const k=S.kidDefs.find(x=>x.id===kidId);if(!k)return;
+  if(!k.pin){completeKidLogin(kidId);}
+  else{
+    pinMode=kidId;pinBuffer='';updatePinDots();
+    document.getElementById('pinAvatar').textContent=k.avatar;
+    document.getElementById('pinTitle').textContent=`Hi ${k.name}! 👋`;
+    document.getElementById('pinHint').textContent='Enter your PIN';
+    document.getElementById('pinOverlay').style.display='flex';
+  }
+}
+function completeKidLogin(kidId){
+  loggedInKidId=kidId;activeKidId=kidId;chartKid=kidId;
+  selectedViewDate=new Date();calWeekOffset=0;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('pinOverlay').style.display='none';
+  const k=S.kidDefs.find(x=>x.id===kidId);
+  const hw=document.getElementById('headerWho');
+  hw.style.display='flex';
+  hw.innerHTML=`<div class="header-avatar">${k.avatar}</div><span class="header-name">${k.name}</span><button class="header-logout" onclick="showLoginScreen()">Switch</button>`;
+  document.getElementById('headerSub').style.display='none';
+  document.getElementById('notifBell').style.display='none';
+  showToast(`Welcome, ${k.name}! 🌟`,'👋');
+  setPage('kids');
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────
+function setPage(p){
+  page=p;
+  ['kids','rewards','chart','parent'].forEach(n=>{
+    document.getElementById('nav'+n.charAt(0).toUpperCase()+n.slice(1))?.classList.toggle('active',n===p);
+  });
+  render();
+}
+function requestParent(){
+  if(parentUnlocked){setPage('parent');return;}
+  pinMode='parent';pinBuffer='';updatePinDots();
+  document.getElementById('pinAvatar').textContent='🔐';
+  document.getElementById('pinTitle').textContent='Parent Access';
+  document.getElementById('pinHint').textContent='Enter your 4-digit PIN';
+  document.getElementById('pinOverlay').style.display='flex';
+}
+
+// ─── PIN ─────────────────────────────────────────────────────────
+function pinKey(d){
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=d;updatePinDots();
+  if(pinBuffer.length===4){
+    setTimeout(()=>{
+      if(pinMode==='parent'){
+        if(pinBuffer===S.pin){
+          document.getElementById('pinOverlay').style.display='none';
+          parentUnlocked=true;
+          document.getElementById('loginScreen').style.display='none';
+          document.getElementById('headerWho').style.display='none';
+          document.getElementById('headerSub').style.display='block';
+          document.getElementById('notifBell').style.display='flex';
+          updateNotifBell();setPage('parent');
+        } else{shakePin();showToast('Wrong PIN','❌');pinBuffer='';updatePinDots();}
+      } else{
+        const k=S.kidDefs.find(x=>x.id===pinMode);
+        if(k&&pinBuffer===k.pin){completeKidLogin(pinMode);}
+        else{shakePin();showToast('Wrong PIN — try again!','❌');pinBuffer='';updatePinDots();}
+      }
+    },150);
+  }
+}
+function pinDel(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots()}
+function pinCancel(){document.getElementById('pinOverlay').style.display='none';pinBuffer='';updatePinDots()}
+function shakePin(){document.getElementById('pinDots').classList.add('pin-shake');setTimeout(()=>document.getElementById('pinDots').classList.remove('pin-shake'),400)}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const dot=document.getElementById('pd'+i);const filled=i<pinBuffer.length;
+    dot.classList.toggle('filled',filled);
+    if(filled){const k=typeof pinMode==='number'?S.kidDefs.find(x=>x.id===pinMode):null;dot.style.background=k?k.color:'#7C3AED';dot.style.borderColor=k?k.color:'#7C3AED';}
+    else{dot.style.background='';dot.style.borderColor='';}
+  }
+}
+
+// ─── CALENDAR NAVIGATION ─────────────────────────────────────────
+function calSelectDay(dateStr){
+  selectedViewDate=new Date(dateStr+'T00:00:00');render();
+}
+function calPrevWeek(){calWeekOffset--;render();}
+function calNextWeek(){if(calWeekOffset<0)calWeekOffset++;render();}
+
+// ─── TASK ACTIONS ────────────────────────────────────────────────
+function toggleTask(type,taskId){
+  if(!canEdit(activeKidId)){showToast("That's not your tab! 🔒",'🚫');return;}
+  const selDow=selectedViewDate.getDay();
+  const today=new Date();today.setHours(0,0,0,0);
+  const selDay=new Date(selectedViewDate);selDay.setHours(0,0,0,0);
+  // Only allow checking on the actual today (not past/future)
+  if(selDay.getTime()!==today.getTime()){showToast("You can only check today's tasks!",'📅');return;}
+  const d=S.kids[activeKidId];
+  const task=d[type].find(t=>t.id===taskId);if(!task)return;
+  // Check task is active today
+  if(!taskActiveOnDay(task,selDow)){showToast(`This chore isn't scheduled for today!`,'📅');return;}
+  if(task.done&&!task.pending){
+    task.done=false;task.pending=false;
+    S.pendingApprovals=S.pendingApprovals.filter(a=>!(a.kidId===activeKidId&&a.type===type&&a.taskId===taskId));
+    S.kids[activeKidId].points=Math.max(0,S.kids[activeKidId].points-pts(activeKidId));
+    save();render();return;
+  }
+  if(task.pending||task.done)return;
+  task.done=true;task.pending=true;
+  const kid=S.kidDefs.find(k=>k.id===activeKidId);
+  S.pendingApprovals.push({id:Date.now(),kidId:activeKidId,kidName:kid.name,kidAvatar:kid.avatar,type,taskId,label:task.label,icon:task.icon});
+  pushNotif(`${kid.name} completed a task`,`${task.icon} ${task.label}`,kid.avatar);
+  showToast('Waiting for parent approval ⏳','📋');
+  save();render();
+}
+function approveTask(approvalId){
+  const a=S.pendingApprovals.find(x=>x.id===approvalId);if(!a)return;
+  S.pendingApprovals=S.pendingApprovals.filter(x=>x.id!==approvalId);
+  const d=S.kids[a.kidId];
+  const task=d[a.type].find(t=>t.id===a.taskId);
+  if(task){task.done=true;task.pending=false;}
+  const p=pts(a.kidId);d.points+=p;
+  const today=new Date().toDateString();const yest=new Date(Date.now()-86400000).toDateString();
+  if(d.lastDate!==today){d.streak=d.lastDate===yest?d.streak+1:1;d.lastDate=today;}
+  const wk=isoWeek(new Date());
+  if(!S.weeklyHistory[a.kidId])S.weeklyHistory[a.kidId]={};
+  if(!S.weeklyHistory[a.kidId][wk])S.weeklyHistory[a.kidId][wk]={chores:0,homework:0,points:0};
+  S.weeklyHistory[a.kidId][wk][a.type]++;S.weeklyHistory[a.kidId][wk].points+=p;
+  checkBadges(d);confetti();showToast(`+${p} pts for ${a.kidName}! ✅`,'⭐');
+  save();render();
+}
+function rejectTask(approvalId){
+  const a=S.pendingApprovals.find(x=>x.id===approvalId);if(!a)return;
+  S.pendingApprovals=S.pendingApprovals.filter(x=>x.id!==approvalId);
+  const d=S.kids[a.kidId];const task=d[a.type].find(t=>t.id===a.taskId);
+  if(task){task.done=false;task.pending=false;}
+  showToast(`Not approved for ${a.kidName}`,'❌');save();render();
+}
+function checkBadges(d){
+  const n=BADGE_DEFS.filter(b=>!d.badges.includes(b.id)&&b.check(d));
+  if(n.length)d.badges=[...d.badges,...n.map(b=>b.id)];
+}
+function resetDay(kidId){
+  const d=S.kids[kidId];
+  d.chores=d.chores.map(c=>({...c,done:false,pending:false}));
+  d.homework=d.homework.map(h=>({...h,done:false,pending:false}));
+  S.pendingApprovals=S.pendingApprovals.filter(a=>a.kidId!==kidId);
+  save();showToast("New day, fresh start! 🌅",'🌅');render();
+}
+
+// ─── REWARD REDEMPTION ───────────────────────────────────────────
+function requestReward(rewardId){
+  if(!loggedInKidId){showToast('Please sign in first','🔒');return;}
+  const reward=S.rewards.find(r=>r.id===rewardId);
+  const kid=S.kidDefs.find(k=>k.id===loggedInKidId);
+  const d=S.kids[loggedInKidId];
+  if(!reward||!kid||!d)return;
+  if(d.points<reward.pts){showToast(`Need ${reward.pts-d.points} more pts!`,'⭐');return;}
+  const wk=isoWeek(new Date());
+  if(S.pendingRewardApprovals.some(a=>a.kidId===loggedInKidId&&a.rewardId===rewardId&&a.week===wk)){showToast('Already requested this week!','⏳');return;}
+  const id=Date.now();
+  S.pendingRewardApprovals.push({id,kidId:loggedInKidId,kidName:kid.name,kidAvatar:kid.avatar,rewardId,rewardLabel:reward.label,rewardIcon:reward.icon,pts:reward.pts,week:wk,date:new Date().toLocaleDateString()});
+  pushNotif(`${kid.name} wants a reward`,`${reward.icon} ${reward.label} (${reward.pts} pts)`,kid.avatar);
+  showToast('Reward request sent to Makeba! 🎁','⏳');
+  save();render();
+}
+function approveReward(approvalId){
+  const a=S.pendingRewardApprovals.find(x=>x.id===approvalId);if(!a)return;
+  S.pendingRewardApprovals=S.pendingRewardApprovals.filter(x=>x.id!==approvalId);
+  const d=S.kids[a.kidId];if(d)d.points=Math.max(0,d.points-a.pts);
+  S.rewardHistory.push({...a,status:'approved'});
+  confetti();showToast(`${a.rewardLabel} approved for ${a.kidName}! 🎉`,'🎁');
+  save();render();
+}
+function rejectReward(approvalId){
+  const a=S.pendingRewardApprovals.find(x=>x.id===approvalId);if(!a)return;
+  S.pendingRewardApprovals=S.pendingRewardApprovals.filter(x=>x.id!==approvalId);
+  S.rewardHistory.push({...a,status:'rejected'});
+  showToast(`${a.rewardLabel} declined`,'❌');save();render();
+}
+
+// ─── PARENT ACTIONS ──────────────────────────────────────────────
+function addKid(){
+  const name=document.getElementById('newKidName').value.trim()||'New Kid';
+  const age=parseInt(document.getElementById('newKidAge').value)||5;
+  const avatar=document.getElementById('newKidAvatar').value||'🌟';
+  const colors=["#FF6B6B","#FF9F43","#A78BFA","#4ECDC4","#74C0FC","#F472B6"];
+  const color=colors[S.kidDefs.length%colors.length];
+  const id=S.nextKidId++;
+  S.kidDefs.push({id,name,age,avatar,color,pin:"",chores:[],homework:[]});
+  S.kids[id]={points:0,streak:0,lastDate:null,badges:[],chores:[],homework:[]};
+  S.weeklyHistory[id]={};
+  document.getElementById('newKidName').value='';document.getElementById('newKidAge').value='';
+  save();render();
+}
+function removeKid(id){
+  if(S.kidDefs.length<=1){showToast('Need at least one kid!','⚠️');return;}
+  S.kidDefs=S.kidDefs.filter(k=>k.id!==id);delete S.kids[id];
+  if(activeKidId===id)activeKidId=S.kidDefs[0].id;
+  save();render();
+}
+function updateKidName(id,val){const k=S.kidDefs.find(x=>x.id===id);if(k)k.name=val;save();}
+function updateKidAge(id,val){const k=S.kidDefs.find(x=>x.id===id);if(k)k.age=parseInt(val)||k.age;save();}
+function setKidAvatar(id,av){
+  const k=S.kidDefs.find(x=>x.id===id);if(!k)return;k.avatar=av;
+  S.pendingApprovals.filter(a=>a.kidId===id).forEach(a=>a.kidAvatar=av);
+  save();render();
+}
+function saveKidPin(kidId){
+  const inp=document.getElementById(`kidpin_${kidId}`);
+  const val=inp?.value.replace(/\D/g,'').slice(0,4);
+  const k=S.kidDefs.find(x=>x.id===kidId);if(!k)return;
+  if(!val){k.pin='';save();showToast('PIN removed','🔓');render();return;}
+  if(val.length!==4){showToast('PIN must be 4 digits','⚠️');return;}
+  k.pin=val;save();showToast(`${k.name}'s PIN saved!`,'🔐');render();
+}
+function addTaskToKid(id,type){
+  const input=document.getElementById(`addTask_${id}_${type}`);
+  const val=input?.value.trim();if(!val)return;
+  const iconEl=document.querySelector(`.icon-opt.selected[data-kid="${id}"][data-type="${type}"]`);
+  const icon=iconEl?.textContent||(type==='chores'?'✅':'📌');
+  const taskId=S.nextTaskId++;
+  const newTask={id:taskId,label:val,icon,days:[],everyday:true};
+  S.kidDefs.find(k=>k.id===id)?.[type].push(newTask);
+  S.kids[id][type].push({...newTask,done:false,pending:false});
+  if(input)input.value='';save();render();
+}
+function removeTaskFromKid(kidId,type,taskId){
+  const k=S.kidDefs.find(x=>x.id===kidId);if(k)k[type]=k[type].filter(t=>t.id!==taskId);
+  S.kids[kidId][type]=S.kids[kidId][type].filter(t=>t.id!==taskId);
+  S.pendingApprovals=S.pendingApprovals.filter(a=>!(a.kidId===kidId&&a.type===type&&a.taskId===taskId));
+  save();render();
+}
+function adjustPoints(kidId,delta){
+  const amt=parseInt(document.getElementById(`pts_adj_${kidId}`)?.value)||5;
+  S.kids[kidId].points=Math.max(0,S.kids[kidId].points+(delta*amt));
+  save();render();
+}
+function addReward(){
+  const label=document.getElementById('newRewardLabel').value.trim();
+  const p=parseInt(document.getElementById('newRewardPts').value)||10;
+  const icon=document.getElementById('newRewardIcon').value||'🎁';
+  if(!label)return;
+  S.rewards.push({id:S.nextRewardId++,pts:p,label,icon});
+  document.getElementById('newRewardLabel').value='';document.getElementById('newRewardPts').value='';
+  save();render();
+}
+function removeReward(id){S.rewards=S.rewards.filter(r=>r.id!==id);save();render();}
+function changePin(){
+  const inp=document.getElementById('newPinInput');
+  const val=inp?.value.replace(/\D/g,'').slice(0,4);
+  if(val?.length!==4){showToast('PIN must be exactly 4 digits','⚠️');return;}
+  S.pin=val;save();if(inp)inp.value='';showToast('Parent PIN updated!','🔐');render();
+}
+function saveSettings(){
+  const day=parseInt(document.getElementById('resetDaySelect')?.value);
+  const enabled=document.getElementById('autoResetToggle')?.checked;
+  S.settings.autoResetDay=isNaN(day)?0:day;
+  S.settings.autoResetEnabled=!!enabled;
+  save();showToast('Settings saved!','⚙️');
+}
+
+// ─── DRAG SCHEDULER ──────────────────────────────────────────────
+function dragStart(e,kidId,type,taskId){
+  dragKidId=kidId;dragType=type;dragTaskId=taskId;
+  e.dataTransfer.effectAllowed='move';
+  e.target.classList.add('dragging');
+}
+function dragEnd(e){e.target.classList.remove('dragging');}
+function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function dropOnDay(e,dayNum){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  if(dragTaskId===null)return;
+  const kDef=S.kidDefs.find(k=>k.id===dragKidId);
+  const kState=S.kids[dragKidId];
+  if(!kDef||!kState)return;
+  const defTask=kDef[dragType].find(t=>t.id===dragTaskId);
+  const stateTask=kState[dragType].find(t=>t.id===dragTaskId);
+  if(!defTask||!stateTask)return;
+  // Toggle day assignment (add if not there, remove if already there)
+  if(dayNum===-1){
+    // Drop on "Everyday" toggle area — set everyday true
+    defTask.everyday=true;stateTask.everyday=true;
+    defTask.days=[];stateTask.days=[];
+  } else {
+    defTask.everyday=false;stateTask.everyday=false;
+    if(!defTask.days.includes(dayNum)){defTask.days.push(dayNum);stateTask.days.push(dayNum);}
+  }
+  dragTaskId=null;dragKidId=null;dragType=null;
+  save();render();
+}
+function removeFromDay(kidId,type,taskId,dayNum){
+  const kDef=S.kidDefs.find(k=>k.id===kidId);
+  const kState=S.kids[kidId];if(!kDef||!kState)return;
+  const defTask=kDef[type].find(t=>t.id===taskId);
+  const stateTask=kState[type].find(t=>t.id===taskId);
+  if(!defTask||!stateTask)return;
+  defTask.days=defTask.days.filter(d=>d!==dayNum);stateTask.days=stateTask.days.filter(d=>d!==dayNum);
+  if(defTask.days.length===0&&!defTask.everyday){defTask.everyday=true;stateTask.everyday=true;}
+  save();render();
+}
+function toggleEveryday(kidId,type,taskId){
+  const kDef=S.kidDefs.find(k=>k.id===kidId);
+  const kState=S.kids[kidId];if(!kDef||!kState)return;
+  const defTask=kDef[type].find(t=>t.id===taskId);
+  const stateTask=kState[type].find(t=>t.id===taskId);
+  if(!defTask||!stateTask)return;
+  defTask.everyday=!defTask.everyday;stateTask.everyday=!stateTask.everyday;
+  if(defTask.everyday){defTask.days=[];stateTask.days=[];}
+  save();render();
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────
+function render(){
+  const c=document.getElementById('appContainer');
+  if(page==='kids')c.innerHTML=renderKidsPage();
+  else if(page==='rewards')c.innerHTML=renderRewardsPage();
+  else if(page==='chart')c.innerHTML=renderChartPage();
+  else if(page==='parent')c.innerHTML=renderParentPage();
+  if(page==='chart')setTimeout(renderChart,50);
+}
+
+// ─── CALENDAR STRIP ──────────────────────────────────────────────
+function renderCalStrip(kidId){
+  const weekStart=getWeekStart(calWeekOffset);
+  const today=new Date();today.setHours(0,0,0,0);
+  const selDay=new Date(selectedViewDate);selDay.setHours(0,0,0,0);
+  const kid=S.kidDefs.find(k=>k.id===kidId);
+  const monthLabel=weekStart.toLocaleDateString([],{month:'long',year:'numeric'});
+
+  const days=Array.from({length:7},(_,i)=>{
+    const d=new Date(weekStart);d.setDate(d.getDate()+i);
+    return d;
+  });
+
+  const daysHtml=days.map(d=>{
+    const isToday=d.getTime()===today.getTime();
+    const isSel=d.getTime()===selDay.getTime();
+    const hasTasks=(getTasksForDay(kidId,'chores',d).length+getTasksForDay(kidId,'homework',d).length)>0;
+    const dateStr=d.toISOString().split('T')[0];
+    return `<div class="cal-day${isToday?' today':''}${isSel&&!isToday?' selected':''}${hasTasks?' has-tasks':''}" onclick="calSelectDay('${dateStr}')">
+      <span class="cal-day-name">${DAY_SHORT[d.getDay()]}</span>
+      <span class="cal-day-num">${d.getDate()}</span>
+    </div>`;
+  }).join('');
+
+  // Mini progress for selected day
+  const cp=pctForDay(kidId,'chores',selDay);
+  const hp=pctForDay(kidId,'homework',selDay);
+  const c=kid?.color||'#FF6B6B';
+  const cbg=cp===100?'linear-gradient(90deg,#22c55e,#4ade80)':`linear-gradient(90deg,${c},${c}88)`;
+  const hbg=hp===100?'linear-gradient(90deg,#22c55e,#4ade80)':`linear-gradient(90deg,${c},${c}88)`;
+
+  return `<div class="cal-strip-wrap slide-in">
+    <div class="cal-month-row">
+      <span class="cal-month">📅 ${monthLabel}</span>
+      <div class="cal-week-nav">
+        <button class="cal-nav-btn" onclick="calPrevWeek()">‹</button>
+        <button class="cal-nav-btn" onclick="calNextWeek()" ${calWeekOffset>=0?'disabled style="opacity:.35"':''}>›</button>
+      </div>
+    </div>
+    <div class="cal-days">${daysHtml}</div>
+    <div class="cal-progress-row">
+      <div class="cal-prog-item">
+        <div class="cal-prog-label"><span>🧹 Chores</span><span>${cp}%</span></div>
+        <div class="cal-prog-track"><div class="cal-prog-fill" style="width:${cp}%;background:${cbg}"></div></div>
+      </div>
+      <div class="cal-prog-item">
+        <div class="cal-prog-label"><span>📚 HW</span><span>${hp}%</span></div>
+        <div class="cal-prog-track"><div class="cal-prog-fill" style="width:${hp}%;background:${hbg}"></div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── KIDS PAGE ───────────────────────────────────────────────────
+function renderKidsPage(){
+  const taskPc=S.pendingApprovals.length,rewardPc=S.pendingRewardApprovals.length,pc=taskPc+rewardPc;
+  const bannerParts=[];
+  if(taskPc>0)bannerParts.push(`${taskPc} task${taskPc>1?'s':''}`);
+  if(rewardPc>0)bannerParts.push(`${rewardPc} reward${rewardPc>1?'s':''}`);
+  const banner=pc>0&&parentUnlocked?`<div class="approval-banner" onclick="setPage('parent')">
+    <span class="ab-icon">⏳</span><div class="ab-text"><div class="ab-title">${bannerParts.join(' & ')} waiting for approval</div><div class="ab-sub">Tap to open Parent Panel</div></div><span class="ab-arrow">›</span></div>`:'';
+
+  const kidTabsHtml=S.kidDefs.map(k=>{
+    const d=S.kids[k.id]||{points:0};const active=k.id===activeKidId;
+    return `<div class="kid-tab${active?' active':''}${k.id!==loggedInKidId?' locked-tab':''}" style="--kc:${k.color};${active?'border-color:'+k.color:''}" onclick="activeKidId=${k.id};render()">
+      <span class="av" style="${active?'animation:pulse 2s infinite':''}">${k.avatar}</span>
+      <div class="kn" style="${active?'color:'+k.color:''}">${k.name}</div>
+      <div class="kp" style="${active?'color:'+k.color:''}">⭐ ${d.points}</div>
+    </div>`;
+  }).join('');
+
+  const kid=S.kidDefs.find(k=>k.id===activeKidId);
+  if(!kid)return '<p style="padding:20px;text-align:center;color:#aaa">No kids — add one in Parent settings!</p>';
+  const d=S.kids[activeKidId];const c=kid.color;
+  const isMe=canEdit(activeKidId);
+  const selDow=selectedViewDate.getDay();
+  const today=new Date();today.setHours(0,0,0,0);
+  const selDay=new Date(selectedViewDate);selDay.setHours(0,0,0,0);
+  const isViewingToday=selDay.getTime()===today.getTime();
+  const selDateLabel=isViewingToday?'Today':selectedViewDate.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'});
+
+  const lockNotice=!isMe?`<div style="background:#FFF3E0;border:2px solid #FFD93D;border-radius:14px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+    <span style="font-size:20px">👀</span><div><div style="font-size:13px;font-weight:800;color:#AA6600">Viewing ${kid.name}'s tasks</div><div style="font-size:11px;color:#CC8800;font-weight:600">Only ${kid.name} can check off their tasks</div></div></div>`:'';
+
+  const badgesHtml=d.badges.length?`<div class="badges">${d.badges.map(bid=>{const b=BADGE_DEFS.find(x=>x.id===bid);return b?`<span class="badge">${b.icon} ${b.label}</span>`:''}).join('')}</div>`:'';
+
+  // Get tasks for selected day
+  const allTypeTasks=d[activeTab]||[];
+  const tasksForDay=getTasksForDay(activeKidId,activeTab,selectedViewDate);
+  const otherTasks=allTypeTasks.filter(t=>!tasksForDay.find(x=>x.id===t.id));
+
+  const renderTaskRow=(t,isActive)=>{
+    const pend=t.pending,done=t.done&&!pend;
+    const locked=!isMe||!isActive;
+    const isWrongDay=!isActive;
+    const dayBadge=t.everyday
+      ?`<span class="task-day-badge everyday-badge">Every day</span>`
+      :t.days?.length
+        ?isActive?`<span class="task-day-badge today-badge">${DAY_SHORT[selDow]}</span>`
+                 :`<span class="task-day-badge wrong-day">${t.days.map(d=>DAY_SHORT[d]).join(', ')}</span>`
+        :'';
+    const clickFn=locked?`showToast('${isMe?"This isn't scheduled for today 📅":"Log in as "+kid.name+" to check tasks 🔒"}','📅')`:`toggleTask('${activeTab}',${t.id})`;
+    return `<div class="task-row${locked?' locked-task':''}${isActive&&!locked?' today-task':''}" style="--tc:${c};${done?`background:${c}12;border-color:${c}40`:pend?'background:#FFF9F0;border-color:#FFD93D':isWrongDay?'opacity:.5':''}" onclick="${clickFn}">
+      <span class="task-icon">${t.icon}</span>
+      <span class="task-label${done?' done':''}">${t.label}</span>
+      ${dayBadge}
+      ${pend?'<span class="task-pending">⏳</span>':''}
+      <div class="task-check${done?' done':''}" style="${done?`background:${c}`:pend?'background:#FFD93D':'background:#e8e8e8'}">${done?'✓':pend?'…':''}</div>
+    </div>`;
+  };
+
+  const taskRows=tasksForDay.length===0&&otherTasks.length===0
+    ?'<div class="empty-msg">No tasks assigned 👆</div>'
+    :[
+      ...tasksForDay.map(t=>renderTaskRow(t,true)),
+      ...(otherTasks.length>0?[`<div style="font-size:11px;font-weight:700;color:#bbb;margin:8px 4px 4px">— Not scheduled ${isViewingToday?'today':'this day'} —</div>`,...otherTasks.map(t=>renderTaskRow(t,false))]:[])
+    ].join('');
+
+  const cp=pctForDay(activeKidId,'chores',selectedViewDate);
+  const hp=pctForDay(activeKidId,'homework',selectedViewDate);
+  const cbg=cp===100?'linear-gradient(90deg,#22c55e,#4ade80)':`linear-gradient(90deg,${c},${c}88)`;
+  const hbg=hp===100?'linear-gradient(90deg,#22c55e,#4ade80)':`linear-gradient(90deg,${c},${c}88)`;
+
+  const summaryRows=S.kidDefs.map(k=>{
+    const kd=S.kids[k.id]||{points:0,streak:0};
+    const kcp=pctForDay(k.id,'chores',today),khp=pctForDay(k.id,'homework',today);
+    return `<div class="summary-row" onclick="activeKidId=${k.id};render()">
+      <span class="sum-av">${k.avatar}</span>
+      <div class="sum-info">
+        <div style="display:flex;justify-content:space-between">
+          <span class="sum-name">${k.name} <span class="sum-age">age ${k.age}</span></span>
+          <span class="sum-stats">⭐${kd.points} · 🔥${kd.streak}</span>
+        </div>
+        <div class="sum-bars">
+          <div class="sum-track"><div class="sum-fill" style="width:${kcp}%;background:${k.color}"></div></div>
+          <div class="sum-track"><div class="sum-fill" style="width:${khp}%;background:${k.color}"></div></div>
+        </div>
+        <div class="sum-pcts"><span class="sum-pct">Chores ${kcp}%</span><span class="sum-pct">HW ${khp}%</span></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+  ${banner}
+  <div class="kid-tabs slide-in">${kidTabsHtml}</div>
+  ${renderCalStrip(activeKidId)}
+  ${lockNotice}
+  <div class="card slide-in">
+    <div class="card-head" style="background:linear-gradient(90deg,${c}18,${c}05);border-bottom-color:${c}22">
+      <div class="card-avatar">${kid.avatar}</div>
+      <div class="card-info">
+        <div class="card-name">${kid.name}</div>
+        <div class="tags">
+          <span class="tag" style="color:${c};background:${c}18">${selDateLabel}</span>
+          <span class="tag" style="color:#FF9F43;background:#FFF3E0">🔥 ${d.streak} streak</span>
+          <span class="tag" style="color:#A78BFA;background:#F5F0FF">⭐ ${d.points} pts</span>
+          ${isMe?`<span class="tag" style="color:#22c55e;background:#F0FFF4">✓ Signed in</span>`:''}
+        </div>
+      </div>
+    </div>
+    ${badgesHtml}
+    <div class="prog-row">
+      <div class="prog-col"><div class="prog-label"><span>🧹 Chores</span><span style="color:${cp===100?'#22c55e':c}">${cp}%</span></div><div class="prog-track"><div class="prog-fill" style="width:${cp}%;background:${cbg}"></div></div></div>
+      <div class="prog-col"><div class="prog-label"><span>📚 Homework</span><span style="color:${hp===100?'#22c55e':c}">${hp}%</span></div><div class="prog-track"><div class="prog-fill" style="width:${hp}%;background:${hbg}"></div></div></div>
+    </div>
+    <div class="sub-tabs">
+      <button class="sub-tab${activeTab==='chores'?' active':''}" style="${activeTab==='chores'?'background:'+c+';box-shadow:0 4px 12px '+c+'44':''}" onclick="activeTab='chores';render()">🧹 Chores</button>
+      <button class="sub-tab${activeTab==='homework'?' active':''}" style="${activeTab==='homework'?'background:'+c+';box-shadow:0 4px 12px '+c+'44':''}" onclick="activeTab='homework';render()">📚 Homework</button>
+    </div>
+    <div class="task-list">${taskRows}</div>
+  </div>
+  <div class="card slide-in" style="padding:14px 16px">
+    <div style="font-family:'Baloo 2',cursive;font-size:14px;font-weight:800;color:#555;margin-bottom:8px">📊 Family Summary — Today</div>
+    ${summaryRows}
+  </div>`;
+}
+
+// ─── REWARDS PAGE ────────────────────────────────────────────────
+function renderRewardsPage(){
+  const kid=S.kidDefs.find(k=>k.id===activeKidId)||S.kidDefs[0];
+  const d=kid?S.kids[kid.id]:{points:0};
+  const wk=isoWeek(new Date());const isMe=loggedInKidId===kid?.id;
+  const kidTabsHtml=S.kidDefs.map(k=>{
+    const kd=S.kids[k.id]||{points:0};const active=k.id===activeKidId;
+    return `<div class="kid-tab${active?' active':''}" style="--kc:${k.color};${active?'border-color:'+k.color:''}" onclick="activeKidId=${k.id};render()">
+      <span class="av">${k.avatar}</span><div class="kn" style="${active?'color:'+k.color:''}">${k.name}</div>
+      <div class="kp" style="${active?'color:'+k.color:''}">⭐ ${kd.points}</div></div>`;
+  }).join('');
+  const rewardsHtml=S.rewards.map(r=>{
+    const canAfford=d&&d.points>=r.pts;
+    const isPending=S.pendingRewardApprovals.some(a=>a.kidId===kid?.id&&a.rewardId===r.id&&a.week===wk);
+    const wasApproved=S.rewardHistory.some(h=>h.kidId===kid?.id&&h.rewardId===r.id&&h.week===wk&&h.status==='approved');
+    let cls='reward-card';
+    if(isPending)cls+=' pending-redeem';else if(canAfford)cls+=' unlocked can-redeem';
+    const ptsAway=r.pts-(d?.points||0);
+    const progress=Math.min(100,Math.round(((d?.points||0)/r.pts)*100));
+    const nudge=!canAfford&&!isPending?`<div class="reward-nudge">${ptsAway} pts to go!</div><div class="reward-nudge-bar"><div class="reward-nudge-fill" style="width:${progress}%"></div></div>`:'';
+    let actionHtml='';
+    if(wasApproved)actionHtml=`<div class="reward-unlocked-txt">✓ Redeemed this week!</div>`;
+    else if(isPending)actionHtml=`<div class="reward-redeem-pending">⏳ Awaiting approval…</div>`;
+    else if(isMe&&canAfford)actionHtml=`<button class="reward-redeem-btn" onclick="event.stopPropagation();requestReward(${r.id})">Redeem 🎁</button>`;
+    else if(!isMe&&canAfford)actionHtml=`<div style="font-size:10px;color:#aaa;margin-top:4px;font-weight:600">Sign in to redeem</div>`;
+    return `<div class="${cls}"><div class="reward-icon">${r.icon}</div><div class="reward-label">${r.label}</div><div class="reward-pts">⭐ ${r.pts} pts</div>${nudge}${actionHtml}</div>`;
+  }).join('');
+  const kidHistory=S.rewardHistory.filter(h=>h.kidId===kid?.id);
+  const kidPending=S.pendingRewardApprovals.filter(a=>a.kidId===kid?.id).map(a=>({...a,status:'pending'}));
+  const allEntries=[...kidPending,...kidHistory];
+  const weekMap={};allEntries.forEach(e=>{if(!weekMap[e.week])weekMap[e.week]=[];weekMap[e.week].push(e);});
+  const sortedWeeks=Object.keys(weekMap).sort().reverse();
+  const historyHtml=sortedWeeks.length===0?'<p style="color:#ccc;font-size:13px;font-weight:700;text-align:center;padding:16px 0">No reward history yet 🎁</p>'
+    :sortedWeeks.map(wkKey=>{
+      const entries=weekMap[wkKey];
+      const totalSpent=entries.filter(e=>e.status==='approved').reduce((s,e)=>s+e.pts,0);
+      return `<div class="week-section">
+        <div class="week-header"><span class="week-label">📅 ${wkKey===wk?'This week':wkKey.replace('-W',' / W')}</span>${totalSpent>0?`<span class="week-badge">−${totalSpent} pts</span>`:''}</div>
+        ${entries.map(e=>`<div class="redeem-history-item"><span class="rhi-icon">${e.rewardIcon}</span><div class="rhi-info"><div class="rhi-name">${e.rewardLabel}</div><div class="rhi-meta">${e.date||e.week}</div></div><span class="rhi-pts">−${e.pts} pts</span><span class="rhi-status ${e.status}">${e.status==='approved'?'✓ Approved':e.status==='rejected'?'✗ Declined':'⏳ Pending'}</span></div>`).join('')}
+      </div>`;
+    }).join('');
+  return `<div class="kid-tabs slide-in">${kidTabsHtml}</div>
+  <div class="card slide-in" style="padding:14px 16px">
+    <div class="section-title" style="margin-top:0">🎁 Rewards Store</div>
+    ${isMe?`<p style="font-size:12px;font-weight:700;color:#aaa;margin-bottom:12px">You have <strong style="color:${kid.color}">⭐ ${d.points} pts</strong></p>`:`<p style="font-size:12px;font-weight:600;color:#aaa;margin-bottom:12px">Viewing ${kid?.name}'s store.</p>`}
+    <div class="rewards-grid">${rewardsHtml}</div>
+  </div>
+  <div class="card slide-in" style="padding:14px 16px"><div class="section-title" style="margin-top:0">📋 Reward History</div>${historyHtml}</div>`;
+}
+
+// ─── CHART PAGE ──────────────────────────────────────────────────
+function renderChartPage(){
+  const kidTabsHtml=S.kidDefs.map(k=>{
+    const active=k.id===chartKid;
+    return `<div class="kid-tab${active?' active':''}" style="--kc:${k.color};${active?'border-color:'+k.color:''}" onclick="chartKid=${k.id};render()">
+      <span class="av">${k.avatar}</span><div class="kn" style="${active?'color:'+k.color:''}">${k.name}</div></div>`;
+  }).join('');
+  const kid=S.kidDefs.find(k=>k.id===chartKid);
+  const d=S.kids[chartKid]||{points:0,streak:0,badges:[],chores:[],homework:[]};
+  const wk=isoWeek(new Date());
+  const wkData=S.weeklyHistory[chartKid]?.[wk]||{chores:0,homework:0,points:0};
+  const weekSummary=`<div class="week-summary-card slide-in">
+    <div class="ws-title">📅 This Week — ${kid?.name||''}</div>
+    <div class="ws-grid">
+      <div class="ws-stat"><div class="ws-val">${wkData.points}</div><div class="ws-lbl">Points</div></div>
+      <div class="ws-stat"><div class="ws-val">${wkData.chores}</div><div class="ws-lbl">Chores</div></div>
+      <div class="ws-stat"><div class="ws-val">${wkData.homework}</div><div class="ws-lbl">Homework</div></div>
+    </div>
+  </div>`;
+  const rankedKids=[...S.kidDefs].sort((a,b)=>(S.weeklyHistory[b.id]?.[wk]?.points||0)-(S.weeklyHistory[a.id]?.[wk]?.points||0));
+  const rankEmojis=['🥇','🥈','🥉'];
+  const leaderboard=`<div class="lb-card slide-in">
+    <div style="font-family:'Baloo 2',cursive;font-size:14px;font-weight:800;color:#555;margin-bottom:10px">🏆 This Week's Leaderboard</div>
+    ${rankedKids.map((k,i)=>{
+      const kd=S.kids[k.id]||{points:0,streak:0};
+      const kw=S.weeklyHistory[k.id]?.[wk]||{points:0,chores:0,homework:0};
+      return `<div class="lb-row lb-${i+1}" onclick="chartKid=${k.id};render()">
+        <span class="lb-rank">${rankEmojis[i]||`${i+1}`}</span>
+        <span class="lb-avatar">${k.avatar}</span>
+        <div class="lb-info"><div class="lb-name">${k.name}</div><div class="lb-detail">🧹 ${kw.chores} · 📚 ${kw.homework} · 🔥 ${kd.streak} streak</div></div>
+        <span class="lb-pts" style="color:${k.color}">⭐ ${kw.points}</span>
+      </div>`;
+    }).join('')}
+  </div>`;
+  return `<div class="kid-tabs slide-in">${kidTabsHtml}</div>
+  ${weekSummary}${leaderboard}
+  <div class="chart-container slide-in">
+    <div class="chart-title">📈 Weekly History — ${kid?.name||''}</div>
+    <div class="chart-tabs">
+      <button class="chart-tab${chartType==='points'?' active':''}" onclick="chartType='points';render()">⭐ Points</button>
+      <button class="chart-tab${chartType==='chores'?' active':''}" onclick="chartType='chores';render()">🧹 Chores</button>
+      <button class="chart-tab${chartType==='homework'?' active':''}" onclick="chartType='homework';render()">📚 HW</button>
+    </div>
+    <canvas id="progressChart" height="180"></canvas>
+    <div id="noChartMsg" style="text-align:center;padding:24px;color:#ccc;font-weight:700;font-size:13px;display:none">No data yet — start checking off tasks! ✅</div>
+  </div>
+  <div class="card slide-in" style="padding:14px 16px">
+    <div class="section-title" style="margin-top:0">🏅 Badges</div>
+    ${d.badges.length?`<div style="display:flex;gap:8px;flex-wrap:wrap">${d.badges.map(bid=>{const b=BADGE_DEFS.find(x=>x.id===bid);return b?`<div style="background:#FFF9F0;border:2px solid #FFD93D;border-radius:12px;padding:8px 12px;text-align:center"><div style="font-size:24px">${b.icon}</div><div style="font-size:11px;font-weight:800;color:#9a6f00;margin-top:2px">${b.label}</div></div>`:''}).join('')}</div>`:'<p style="color:#ccc;font-size:13px;font-weight:700">No badges yet 🌟</p>'}
+  </div>`;
+}
+function renderChart(){
+  const canvas=document.getElementById('progressChart');if(!canvas)return;
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+  const hist=S.weeklyHistory[chartKid]||{};const weeks=Object.keys(hist).sort().slice(-8);
+  if(!weeks.length){canvas.style.display='none';document.getElementById('noChartMsg').style.display='block';return;}
+  canvas.style.display='block';document.getElementById('noChartMsg').style.display='none';
+  const kid=S.kidDefs.find(k=>k.id===chartKid);const color=kid?.color||'#FF6B6B';
+  chartInstance=new Chart(canvas,{type:'bar',data:{labels:weeks.map(w=>w.replace('-W','W')),datasets:[{data:weeks.map(w=>hist[w]?.[chartType]||0),backgroundColor:color+'88',borderColor:color,borderWidth:2,borderRadius:8}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f0f0f0'},ticks:{font:{family:'Quicksand',weight:'700'},color:'#aaa'}},x:{grid:{display:false},ticks:{font:{family:'Quicksand',weight:'700'},color:'#aaa'}}}}});
+}
+
+// ─── PARENT PAGE ─────────────────────────────────────────────────
+function renderParentPage(){
+  const approvalsHtml=S.pendingApprovals.length===0?'<p style="color:#aaa;font-size:13px;font-weight:700;padding:6px 0">No pending task approvals 🎉</p>'
+    :S.pendingApprovals.map(a=>`<div class="approval-item">
+      <span class="ai-avatar">${a.kidAvatar}</span>
+      <div class="ai-info"><div class="ai-name">${a.kidName}</div><div class="ai-task">${a.icon} ${a.label} (${a.type})</div></div>
+      <div class="approval-actions"><button class="btn btn-green btn-sm" onclick="approveTask(${a.id})">✓ Yes</button><button class="btn btn-red btn-sm" onclick="rejectTask(${a.id})">✗ No</button></div>
+    </div>`).join('');
+
+  const rewardApprovalsHtml=S.pendingRewardApprovals.length===0?'<p style="color:#aaa;font-size:13px;font-weight:700;padding:6px 0">No pending reward requests 🎁</p>'
+    :S.pendingRewardApprovals.map(a=>`<div class="reward-approval-item">
+      <span class="rai-icon">${a.rewardIcon}</span>
+      <div class="rai-info"><div class="rai-name">${a.kidAvatar} ${a.kidName} wants: ${a.rewardLabel}</div><div class="rai-sub">Week ${a.week} · ${a.date||''}</div></div>
+      <span class="rai-cost">−${a.pts} pts</span>
+      <div class="approval-actions"><button class="btn btn-green btn-sm" onclick="approveReward(${a.id})">✓</button><button class="btn btn-red btn-sm" onclick="rejectReward(${a.id})">✗</button></div>
+    </div>`).join('');
+
+  const pointsHtml=S.kidDefs.map(k=>{
+    const d=S.kids[k.id]||{points:0};
+    return `<div class="points-row">
+      <div class="points-kid"><span class="points-av">${k.avatar}</span><span class="points-name">${k.name}</span></div>
+      <span class="points-val">⭐ ${d.points}</span>
+      <div class="points-btns"><input id="pts_adj_${k.id}" class="pts-adj-input" type="number" value="5" min="1" max="100"/>
+        <button class="pts-btn plus" onclick="adjustPoints(${k.id},1)">+</button><button class="pts-btn minus" onclick="adjustPoints(${k.id},-1)">−</button>
+      </div>
+      <button class="btn btn-gray btn-sm" onclick="resetDay(${k.id})" style="margin-left:4px">🌅</button>
+    </div>`;
+  }).join('');
+
+  // ── DRAG SCHEDULER ──────────────────────────────────────────────
+  const weekStart=getWeekStart(0);
+  const today=new Date();today.setHours(0,0,0,0);
+  const schedKidId=activeKidId;
+  const schedKid=S.kidDefs.find(k=>k.id===schedKidId);
+
+  const schedKidTabsHtml=`<div class="kid-tabs" style="margin-bottom:10px">${S.kidDefs.map(k=>{
+    const active=k.id===schedKidId;
+    return `<div class="kid-tab${active?' active':''}" style="--kc:${k.color};${active?'border-color:'+k.color:''}" onclick="activeKidId=${k.id};render()">
+      <span class="av">${k.avatar}</span><div class="kn" style="${active?'color:'+k.color:''}">${k.name}</div></div>`;
+  }).join('')}</div>`;
+
+  const allTasks=[...(schedKid?.chores||[]).map(t=>({...t,type:'chores'})),...(schedKid?.homework||[]).map(t=>({...t,type:'homework'}))];
+
+  const dayColsHtml=Array.from({length:7},(_,i)=>{
+    const d=new Date(weekStart);d.setDate(d.getDate()+i);
+    const dow=d.getDay();const isToday=d.getTime()===today.getTime();
+    const assignedHere=allTasks.filter(t=>!t.everyday&&t.days?.includes(dow));
+    return `<div class="sched-day-col">
+      <div class="sched-day-head${isToday?' today-head':''}">
+        <span class="sched-day-name">${DAY_NAMES[dow]}</span>
+        <span class="sched-day-date">${d.getDate()}/${d.getMonth()+1}</span>
+      </div>
+      <div class="sched-drop-zone" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnDay(event,${dow})">
+        ${assignedHere.length===0?`<div style="font-size:11px;color:#ccc;font-weight:600;padding:4px">Drop tasks here</div>`
+          :assignedHere.map(t=>`<span class="sched-chip" draggable="true" ondragstart="dragStart(event,${schedKidId},'${t.type}',${t.id})" ondragend="dragEnd(event)">
+            ${t.icon} ${t.label}
+            <span class="chip-remove" onclick="removeFromDay(${schedKidId},'${t.type}',${t.id},${dow})">✕</span>
+          </span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  const everydayTasks=allTasks.filter(t=>t.everyday);
+  const unscheduledTasks=allTasks.filter(t=>!t.everyday&&(!t.days||t.days.length===0));
+
+  const everydayHtml=`<div style="background:#F0FFF4;border:1.5px solid #22c55e40;border-radius:14px;padding:10px 12px;margin-bottom:10px">
+    <div style="font-size:12px;font-weight:800;color:#22c55e;margin-bottom:6px">🔄 Everyday tasks</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">
+      ${everydayTasks.length===0?'<span style="font-size:11px;color:#aaa;font-weight:600">None assigned</span>'
+        :everydayTasks.map(t=>`<span class="sched-chip" draggable="true" ondragstart="dragStart(event,${schedKidId},'${t.type}',${t.id})" ondragend="dragEnd(event)" style="border-color:#22c55e40">
+          ${t.icon} ${t.label}
+          <input type="checkbox" checked title="Everyday" style="width:12px;height:12px;accent-color:#22c55e;cursor:pointer;margin-left:2px" onclick="toggleEveryday(${schedKidId},'${t.type}',${t.id})">
+        </span>`).join('')}
+    </div>
+  </div>`;
+
+  const unschedHtml=unscheduledTasks.length>0?`<div class="sched-unassigned">
+    <div class="sched-unassigned-title">📌 Unscheduled — drag onto a day or check Everyday</div>
+    <div style="display:flex;flex-wrap:wrap">
+      ${unscheduledTasks.map(t=>`<span class="sched-chip" draggable="true" ondragstart="dragStart(event,${schedKidId},'${t.type}',${t.id})" ondragend="dragEnd(event)">
+        ${t.icon} ${t.label}
+        <input type="checkbox" title="Everyday" style="width:12px;height:12px;accent-color:#22c55e;cursor:pointer;margin-left:2px" onclick="toggleEveryday(${schedKidId},'${t.type}',${t.id})">
+      </span>`).join('')}
+    </div>
+  </div>`:'';
+
+  const kidsHtml=S.kidDefs.map(k=>{
+    const cOpen=collapsibleOpen['kid_'+k.id];const hwOpen=collapsibleOpen['hw_'+k.id];
+    return `<div class="kid-edit-card">
+      <div class="kid-edit-head"><span class="kid-edit-avatar">${k.avatar}</span><span class="kid-edit-name">${k.name}</span><button class="btn btn-red btn-sm" onclick="removeKid(${k.id})">Remove</button></div>
+      <div class="form-row"><input class="form-input" value="${k.name}" placeholder="Name" onchange="updateKidName(${k.id},this.value)"/>
+        <input class="form-input" type="number" value="${k.age}" min="1" max="17" style="width:60px;flex:none" onchange="updateKidAge(${k.id},this.value)"/></div>
+      <div style="font-size:11px;font-weight:700;color:#aaa;margin-bottom:4px">Avatar</div>
+      <div class="avatar-picker">${AVATARS.map(av=>`<div class="avatar-opt${k.avatar===av?' selected':''}" onclick="setKidAvatar(${k.id},'${av}')">${av}</div>`).join('')}</div>
+      <div class="collapsible-head" onclick="collapsibleOpen['kid_${k.id}']=!cOpen;render()"><span>🧹 Chores (${k.chores.length})</span><span>${cOpen?'▲':'▼'}</span></div>
+      <div class="collapsible-body${cOpen?' open':''}">
+        ${k.chores.map(t=>`<div class="task-edit-row"><span class="task-edit-icon">${t.icon}</span><span class="task-edit-label">${t.label} ${t.everyday?'<span style="font-size:10px;color:#22c55e">• everyday</span>':t.days?.map(d=>DAY_SHORT[d]).join(', ')||''}</span><button class="task-edit-remove" onclick="removeTaskFromKid(${k.id},'chores',${t.id})">✕</button></div>`).join('')}
+        <div class="icon-picker">${TASK_ICONS_CHORE.map(ic=>`<div class="icon-opt" data-kid="${k.id}" data-type="chores" onclick="this.parentElement.querySelectorAll('.icon-opt').forEach(x=>x.classList.remove('selected'));this.classList.add('selected')">${ic}</div>`).join('')}</div>
+        <div class="form-row"><input id="addTask_${k.id}_chores" class="form-input" placeholder="Add chore…" onkeydown="if(event.key==='Enter')addTaskToKid(${k.id},'chores')"/><button class="btn btn-purple" onclick="addTaskToKid(${k.id},'chores')">+</button></div>
+      </div>
+      <div class="collapsible-head" onclick="collapsibleOpen['hw_${k.id}']=!hwOpen;render()"><span>📚 Homework (${k.homework.length})</span><span>${hwOpen?'▲':'▼'}</span></div>
+      <div class="collapsible-body${hwOpen?' open':''}">
+        ${k.homework.map(t=>`<div class="task-edit-row"><span class="task-edit-icon">${t.icon}</span><span class="task-edit-label">${t.label} ${t.everyday?'<span style="font-size:10px;color:#22c55e">• everyday</span>':t.days?.map(d=>DAY_SHORT[d]).join(', ')||''}</span><button class="task-edit-remove" onclick="removeTaskFromKid(${k.id},'homework',${t.id})">✕</button></div>`).join('')}
+        <div class="icon-picker">${TASK_ICONS_HW.map(ic=>`<div class="icon-opt" data-kid="${k.id}" data-type="homework" onclick="this.parentElement.querySelectorAll('.icon-opt').forEach(x=>x.classList.remove('selected'));this.classList.add('selected')">${ic}</div>`).join('')}</div>
+        <div class="form-row"><input id="addTask_${k.id}_homework" class="form-input" placeholder="Add homework task…" onkeydown="if(event.key==='Enter')addTaskToKid(${k.id},'homework')"/><button class="btn btn-purple" onclick="addTaskToKid(${k.id},'homework')">+</button></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const kidPinsHtml=S.kidDefs.map(k=>`<div class="kid-pin-row">
+    <span class="kid-pin-av">${k.avatar}</span><span class="kid-pin-name">${k.name}</span>
+    <span style="font-size:11px;color:#aaa;font-weight:600;margin-right:4px">${k.pin?'✓ set':'no PIN'}</span>
+    <input id="kidpin_${k.id}" class="kid-pin-input" type="password" maxlength="4" placeholder="····" inputmode="numeric" value="${k.pin||''}"/>
+    <button class="kid-pin-save" onclick="saveKidPin(${k.id})">Save</button>
+  </div>`).join('');
+
+  const rewardEditHtml=S.rewards.map(r=>`<div class="reward-edit-card"><span class="reward-edit-icon">${r.icon}</span>
+    <div class="reward-edit-info"><div class="reward-edit-name">${r.label}</div><div class="reward-edit-pts">⭐ ${r.pts} pts</div></div>
+    <button class="btn btn-red btn-sm" onclick="removeReward(${r.id})">Remove</button></div>`).join('');
+
+  return `<div class="slide-in">
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0;color:#FF9F43">⏳ Task Approvals</div>${approvalsHtml}</div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0;color:#7C3AED">🎁 Reward Requests</div>
+      <p style="font-size:12px;color:#aaa;font-weight:600;margin-bottom:8px">Approve to deduct points.</p>
+      ${rewardApprovalsHtml}</div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0">📅 Weekly Schedule</div>
+      <p style="font-size:12px;color:#aaa;font-weight:600;margin-bottom:10px">Drag tasks onto days. Check ☑ to make a task everyday. New tasks default to everyday.</p>
+      ${schedKidTabsHtml}
+      ${everydayHtml}
+      ${unschedHtml}
+      <div style="font-size:12px;font-weight:800;color:#555;margin-bottom:8px">📆 This week</div>
+      <div class="sched-wrap">${dayColsHtml}</div>
+    </div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0">⭐ Adjust Points</div>${pointsHtml}</div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0">⚙️ Settings</div>
+      <div class="setting-row">
+        <div class="setting-label"><div class="setting-title">🔄 Auto Weekly Reset</div><div class="setting-sub">Clears all tasks on selected day</div></div>
+        <input type="checkbox" id="autoResetToggle" style="width:20px;height:20px;cursor:pointer;accent-color:#7C3AED" ${S.settings.autoResetEnabled?'checked':''}/>
+      </div>
+      <div class="form-row" style="margin-top:4px">
+        <label style="font-size:13px;font-weight:700;color:#555;flex:1">Reset day</label>
+        <select id="resetDaySelect" class="form-select">${DAY_NAMES.map((d,i)=>`<option value="${i}" ${S.settings.autoResetDay===i?'selected':''}>${d}</option>`).join('')}</select>
+        <button class="btn btn-purple btn-sm" onclick="saveSettings()">Save</button>
+      </div>
+      <div style="font-size:11px;color:#aaa;font-weight:600;margin-top:4px">Last reset: ${S.settings.lastResetWeek||'Never'}</div>
+    </div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0">🔑 Kid PINs</div>
+      <p style="font-size:12px;color:#aaa;font-weight:600;margin-bottom:8px">Leave blank for open access.</p>
+      ${kidPinsHtml}</div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0">👧 Manage Kids</div>${kidsHtml}
+      <div class="divider"></div>
+      <div style="font-size:12px;font-weight:800;color:#555;margin-bottom:8px">➕ Add New Kid</div>
+      <div class="form-row"><input id="newKidName" class="form-input" placeholder="Name"/>
+        <input id="newKidAge" class="form-input" type="number" min="1" max="17" placeholder="Age" style="width:64px;flex:none"/></div>
+      <div class="form-row"><input id="newKidAvatar" class="form-input" placeholder="Avatar emoji e.g. 🐱" maxlength="2"/>
+        <button class="btn btn-purple" onclick="addKid()">Add Kid</button></div>
+    </div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0">🎁 Manage Rewards</div>${rewardEditHtml}
+      <div class="divider"></div>
+      <div style="font-size:12px;font-weight:800;color:#555;margin-bottom:8px">➕ Add Reward</div>
+      <div class="form-row"><input id="newRewardLabel" class="form-input" placeholder="Reward name"/><input id="newRewardIcon" class="form-input" placeholder="🎁" maxlength="2" style="width:56px;flex:none"/></div>
+      <div class="form-row"><input id="newRewardPts" class="form-input" type="number" min="1" placeholder="Points needed"/><button class="btn btn-purple" onclick="addReward()">Add</button></div>
+    </div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0">🔐 Parent PIN</div>
+      <p style="font-size:12px;color:#aaa;font-weight:600;margin-bottom:8px">Default: 1234</p>
+      <div class="pin-change-row"><input id="newPinInput" class="pin-change-input" type="password" maxlength="4" placeholder="····" inputmode="numeric"/>
+        <button class="btn btn-purple" onclick="changePin()">Save PIN</button></div>
+    </div>
+
+    <div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <div class="section-title" style="margin-top:0">💾 Export Data</div>
+      <p style="font-size:12px;color:#aaa;font-weight:600;margin-bottom:10px">Download all weekly history as CSV.</p>
+      <button class="btn btn-orange" onclick="exportCSV()" style="width:100%;padding:12px">📊 Download CSV Report</button>
+    </div>
+
+    <div style="text-align:center;padding:8px 0">
+      <button class="btn btn-gray" onclick="parentUnlocked=false;showLoginScreen()">🔒 Lock &amp; Sign Out</button>
+    </div>
+  </div>`;
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+checkAutoReset();
+showLoginScreen();
+</script>
+</body>
+</html>
